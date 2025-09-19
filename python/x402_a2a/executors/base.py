@@ -13,8 +13,6 @@
 # limitations under the License.
 """Base executor types and interfaces for x402 payment middleware."""
 
-from abc import ABC, abstractmethod
-
 from ..types import (
     AgentExecutor,
     RequestContext,
@@ -25,7 +23,7 @@ from ..types import (
 from ..core.utils import x402Utils
 
 
-class x402BaseExecutor(ABC):
+class x402BaseExecutor(AgentExecutor):
     """Base executor with x402 protocol support."""
 
     def __init__(self, delegate: AgentExecutor, config: x402ExtensionConfig):
@@ -57,12 +55,11 @@ class x402BaseExecutor(ABC):
 
         return False
 
-    @abstractmethod
-    async def execute(self, context: RequestContext, event_queue: EventQueue):
-        """Execute the agent with x402 payment middleware.
+    async def cancel(self, context: RequestContext, event_queue: EventQueue):
+        """Cancel the task by delegating to the underlying executor.
 
         Args:
-            context: Request context
+            context: Request context containing the task ID to cancel
             event_queue: Event queue for task updates
         """
-        ...
+        return await self._delegate.cancel(context, event_queue)
