@@ -14,7 +14,7 @@
 import hashlib
 from typing import override
 
-from a2a.types import AgentCard, AgentCapabilities, AgentSkill
+from a2a.types import AgentCard, AgentCapabilities, AgentSkill, AgentExtension
 from google.adk.agents import LlmAgent
 from google.adk.agents.callback_context import CallbackContext
 from google.genai import types
@@ -141,14 +141,16 @@ class AdkMerchantAgent(BaseAgent):
             description="This agent sells items using the clean x402 server architecture.",
             url=url,
             version="4.0.0",
-            defaultInputModes=["text", "text/plain"],
-            defaultOutputModes=["text", "text/plain"],
+            default_input_modes=["text", "text/plain"],
+            default_output_modes=["text", "text/plain"],
             capabilities=AgentCapabilities(
                 streaming=False,
                 extensions=[
-                    get_extension_declaration(
-                        description="Supports payments using the x402 protocol.",
-                        required=True,
+                    AgentExtension(
+                        **get_extension_declaration(
+                            description="Supports payments using the x402 protocol.",
+                            required=True,
+                        )
                     )
                 ],
             ),
