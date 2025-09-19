@@ -36,18 +36,18 @@ class MockFacilitator(FacilitatorClient):
 
     @override
     async def verify(
-        self, payload: PaymentPayload, requirements: PaymentRequirements
+        self, payment: PaymentPayload, payment_requirements: PaymentRequirements
     ) -> VerifyResponse:
         """Mocks the verification step."""
         logging.info("--- MOCK FACILITATOR: VERIFY ---")
-        logging.info(f"Received payload:\n{payload.model_dump_json(indent=2)}")
+        logging.info(f"Received payload:\n{payment.model_dump_json(indent=2)}")
 
         payer = None
         # The top-level object is PaymentPayload, the nested is ExactPaymentPayload
-        if isinstance(payload.payload, ExactPaymentPayload):
-            payer = payload.payload.authorization.from_
+        if isinstance(payment.payload, ExactPaymentPayload):
+            payer = payment.payload.authorization.from_
         else:
-            raise TypeError(f"Unsupported payload type: {type(payload.payload)}")
+            raise TypeError(f"Unsupported payload type: {type(payment.payload)}")
 
         if self._is_valid:
             return VerifyResponse(is_valid=True, payer=payer)
@@ -55,7 +55,7 @@ class MockFacilitator(FacilitatorClient):
 
     @override
     async def settle(
-        self, payload: PaymentPayload, requirements: PaymentRequirements
+        self, payment: PaymentPayload, payment_requirements: PaymentRequirements
     ) -> SettleResponse:
         """Mocks the settlement step."""
         logging.info("--- MOCK FACILITATOR: SETTLE ---")
