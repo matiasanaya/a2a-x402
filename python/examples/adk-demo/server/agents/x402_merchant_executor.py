@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from typing import override
+from typing import override, Optional
 
 from a2a.server.agent_execution import AgentExecutor
 
@@ -40,7 +40,9 @@ class x402MerchantExecutor(x402ServerExecutor):
     """
 
     def __init__(
-        self, delegate: AgentExecutor, facilitator_config: FacilitatorConfig = None
+        self,
+        delegate: AgentExecutor,
+        facilitator_config: Optional[FacilitatorConfig] = None,
     ):
         super().__init__(delegate, x402ExtensionConfig())
 
