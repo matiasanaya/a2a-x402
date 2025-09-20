@@ -19,10 +19,11 @@ import httpx
 from a2a.client import A2ACardResolver
 from a2a.types import (
     AgentCard,
-    JSONRPCError,
+    JSONRPCErrorResponse,
     Message,
     MessageSendParams,
     Part,
+    Role,
     Task,
     TaskState,
     TextPart,
@@ -168,11 +169,11 @@ You are a master orchestrator agent. Your job is to complete user requests by de
         # --- Construct the message with metadata ---
         request = MessageSendParams(
             message=Message(
-                messageId=str(uuid.uuid4()),
-                role="user",
+                message_id=str(uuid.uuid4()),
+                role=Role.user,
                 parts=[Part(root=TextPart(text=message))],
-                contextId=state.get("context_id"),
-                taskId=task_id,
+                context_id=state.get("context_id"),
+                task_id=task_id,
                 metadata=message_metadata if message_metadata else None,
             )
         )
@@ -182,12 +183,24 @@ You are a master orchestrator agent. Your job is to complete user requests by de
             request.message.message_id, request, self.task_callback
         )
 
+        # --- Handle potential nothing ---
+        if not response_task:
+            logger.error(f"Received no response from {agent_name}")
+            return f"Agent '{agent_name}' returned nothing"
+
         # --- Handle potential server errors ---
-        if isinstance(response_task, JSONRPCError):
+        if isinstance(response_task, JSONRPCErrorResponse):
             logger.error(
-                f"Received JSONRPCError from {agent_name}: {response_task.message}"
+                f"Received JSONRPCError from {agent_name}: {response_task.error.message}"
             )
-            return f"Agent '{agent_name}' returned an error: {response_task.message} (Code: {response_task.code})"
+            return f"Agent '{agent_name}' returned an error: {response_task.error.message} (Code: {response_task.error.code})"
+
+        if isinstance(response_task, Message):
+            return (
+                response_task.parts[0].root.text
+                if isinstance(response_task.parts[0].root, TextPart)
+                else f"Agent '{agent_name}' did not return a valid text response: {response_task.parts[0]}"
+            )
 
         # Update state with the latest task info
         state["context_id"] = response_task.context_id
@@ -210,6 +223,11 @@ You are a master orchestrator agent. Your job is to complete user requests by de
             # Extract details for the confirmation message.
             payment_option = requirements.accepts[0]
             currency_amount = payment_option.max_amount_required
+
+            if not payment_option.extra:
+                raise ValueError(
+                    "Server requested payment but payment option is missing 'extra' details."
+                )
             currency_name = payment_option.extra.get("name", "TOKEN")
             product_name = payment_option.extra.get("product", {}).get(
                 "name", "the item"
