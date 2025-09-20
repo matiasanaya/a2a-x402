@@ -13,8 +13,6 @@
 # limitations under the License.
 from typing import Callable
 
-from numpy import number
-
 import httpx
 from a2a.client import A2AClient
 from a2a.types import (
@@ -46,18 +44,18 @@ class RemoteAgentConnections:
 
     async def send_message(
         self,
-        id: number | str,
+        id: str | int,
         request: MessageSendParams,
         task_callback: TaskUpdateCallback | None,
-    ) -> Task | Message | None:
+    ) -> Task | Message | None | JSONRPCErrorResponse:
         if self.card.capabilities.streaming:
             task = None
             async for response in self.agent_client.send_message_streaming(
                 SendStreamingMessageRequest(id=id, params=request)
             ):
                 print(f"THE RESULT RESPONSE {response}")
-                if not response.root.result:
-                    return response.root.error
+                if isinstance(response.root, JSONRPCErrorResponse):
+                    return response.root
                 # In the case a message is returned, that is the end of the interaction.
                 event = response.root.result
                 if isinstance(event, Message):
@@ -66,7 +64,7 @@ class RemoteAgentConnections:
                 # Otherwise we are in the Task + TaskUpdate cycle.
                 if task_callback and event:
                     task = task_callback(event)
-                if hasattr(event, "final") and event.final:
+                if isinstance(event, TaskStatusUpdateEvent) and event.final:
                     break
             return task
         else:  # Non-streaming
@@ -74,7 +72,7 @@ class RemoteAgentConnections:
                 SendMessageRequest(id=id, params=request)
             )
             if isinstance(response.root, JSONRPCErrorResponse):
-                return response.root.error
+                return response.root
             if isinstance(response.root.result, Message):
                 return response.root.result
 
