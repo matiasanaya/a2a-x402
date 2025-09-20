@@ -167,29 +167,6 @@ class ADKAgentExecutor(AgentExecutor):
             # Prepare the next message to send to the agent, containing the tool results.
             current_message = types.Content(parts=tool_outputs, role="tool")
 
-    async def _preprocess_and_find_payment_payload(
-        self, context: RequestContext
-    ) -> str | None:
-        """
-        Inspects incoming message parts to find a JSON string containing an
-        x402_payment_object and extracts the object's value.
-        """
-        for part in context.message.parts:
-            part = part.root
-            # The payload arrives as a TextPart containing a JSON string
-            if isinstance(part, DataPart):
-                try:
-                    # Attempt to parse the text as JSON
-                    data = part.data
-                    # Check if the parsed dict contains our key
-                    if isinstance(data, dict) and "x402_payment_object" in data:
-                        # Return the base64 encoded payload string
-                        return data["x402_payment_object"]
-                except (json.JSONDecodeError, TypeError):
-                    # Not a valid JSON string or not a dict, so we ignore it
-                    continue
-        return None
-
     async def execute(
         self,
         context: RequestContext,
