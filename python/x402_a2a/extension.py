@@ -13,14 +13,18 @@
 # limitations under the License.
 """Extension declaration and constants for A2A x402 protocol."""
 
+from a2a.types import AgentExtension
+
 from .types.config import X402_EXTENSION_URI
 
 
 def get_extension_declaration(
     description: str = "Supports x402 payments", required: bool = True
-) -> dict:
+) -> AgentExtension:
     """Creates extension declaration for AgentCard."""
-    return {"uri": X402_EXTENSION_URI, "description": description, "required": required}
+    return AgentExtension(
+        uri=X402_EXTENSION_URI, description=description, required=required
+    )
 
 
 def check_extension_activation(request_headers: dict) -> bool:
