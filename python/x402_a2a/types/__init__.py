@@ -36,8 +36,10 @@ from x402.types import (
     TokenAmount,
     TokenAsset,
     EIP712Domain,
-    SupportedNetworks,
 )
+
+from x402.networks import SupportedNetworks
+
 from x402.facilitator import FacilitatorConfig, FacilitatorClient
 
 from .state import PaymentStatus, x402Metadata
