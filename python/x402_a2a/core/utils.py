@@ -27,7 +27,7 @@ from ..types import (
     TaskState,
     TaskStatus,
 )
-from a2a.types import TextPart
+from a2a.types import Role, Part, TextPart
 
 
 def _parse_payment_payload(payload_data: dict) -> PaymentPayload:
@@ -52,11 +52,12 @@ def create_payment_submission_message(
         message_id: Optional specific message ID; generates UUID if not provided
     """
     msg_id = message_id if message_id is not None else str(uuid.uuid4())
+
     return Message(
-        messageId=msg_id,  # Use provided ID or generate UUID
+        message_id=msg_id,  # Use provided ID or generate UUID
         task_id=task_id,  # Spec mandates this correlation
-        role="user",
-        parts=[TextPart(kind="text", text=text)],
+        role=Role.user,
+        parts=[Part(TextPart(text=text))],
         metadata={
             x402Metadata.STATUS_KEY: PaymentStatus.PAYMENT_SUBMITTED.value,
             x402Metadata.PAYLOAD_KEY: payment_payload.model_dump(by_alias=True),
@@ -185,11 +186,9 @@ class x402Utils:
             from a2a.types import TextPart
 
             task.status.message = Message(
-                messageId=f"{task.id}-status",
-                role="agent",
-                parts=[
-                    TextPart(kind="text", text="Payment is required for this service.")
-                ],
+                message_id=f"{task.id}-status",
+                role=Role.agent,
+                parts=[Part(TextPart(text="Payment is required for this service."))],
                 metadata={},
             )
 
@@ -219,9 +218,11 @@ class x402Utils:
             from a2a.types import TextPart
 
             task.status.message = Message(
-                messageId=f"{task.id}-status",
-                role="agent",
-                parts=[TextPart(kind="text", text="Payment verification recorded.")],
+                message_id=f"{task.id}-status",
+                role=Role.agent,
+                parts=[
+                    Part(TextPart(kind="text", text="Payment verification recorded."))
+                ],
                 metadata={},
             )
 
@@ -247,9 +248,11 @@ class x402Utils:
             from a2a.types import TextPart
 
             task.status.message = Message(
-                messageId=f"{task.id}-status",
-                role="agent",
-                parts=[TextPart(kind="text", text="Payment completed successfully.")],
+                message_id=f"{task.id}-status",
+                role=Role.agent,
+                parts=[
+                    Part(TextPart(kind="text", text="Payment completed successfully."))
+                ],
                 metadata={},
             )
 
@@ -284,9 +287,9 @@ class x402Utils:
             from a2a.types import TextPart
 
             task.status.message = Message(
-                messageId=f"{task.id}-status",
-                role="agent",
-                parts=[TextPart(kind="text", text="Payment failed.")],
+                message_id=f"{task.id}-status",
+                role=Role.agent,
+                parts=[Part(TextPart(kind="text", text="Payment failed."))],
                 metadata={},
             )
 
